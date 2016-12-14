@@ -24,19 +24,19 @@ First you must import it
 
 * Use **memory** as provider:
 
-        session.Options{"memory", `{"cookieName":"MacrossSessionId","gclifetime":3600}`}
+        session.Options{"memory", `{"cookieName":"MacrossSessionId","gcLifetime":3600}`}
 
 * Use **file** as provider, the last param is the path where you want file to be stored:
 
-	    session.Options{"file", `{"cookieName":"MacrossSessionId","gclifetime":3600,"ProviderConfig":"./data/session"}`}
+	    session.Options{"file", `{"cookieName":"MacrossSessionId","gcLifetime":3600,"ProviderConfig":"./data/session"}`}
 
 * Use **Redis** as provider, the last param is the Redis conn address,poolsize,password:
 
-		session.Options{"redis", `{"cookieName":"MacrossSessionId","gclifetime":3600,"ProviderConfig":"127.0.0.1:6379,100,macross"}`}
+		session.Options{"redis", `{"cookieName":"MacrossSessionId","gcLifetime":3600,"ProviderConfig":"127.0.0.1:6379,100,macross"}`}
 
 * Use **Cookie** as provider:
 
-		session.Options{"cookie", `{"cookieName":"MacrossSessionId","enableSetCookie":false,"gclifetime":3600,"ProviderConfig":"{\"cookieName\":\"MacrossSessionId\",\"securityKey\":\"beegocookiehashkey\"}"}`}
+		session.Options{"cookie", `{"cookieName":"MacrossSessionId","enableSetCookie":false,"gcLifetime":3600,"ProviderConfig":"{\"cookieName\":\"MacrossSessionId\",\"securityKey\":\"beegocookiehashkey\"}"}`}
 
 
 Finally in the code you can use it like this
@@ -56,7 +56,7 @@ func main() {
 
 	v := macross.New()
 	v.Use(recover.Recover())
-	v.Use(session.Sessioner(session.Options{"file", `{"cookieName":"MacrossSessionId","gclifetime":3600,"ProviderConfig":"./data/session"}`}))
+	v.Use(session.Sessioner(session.Options{"file", `{"cookieName":"MacrossSessionId","gcLifetime":3600,"ProviderConfig":"./data/session"}`}))
 	//v.Use(session.Sessioner(session.Options{"redis", `{"cookieName":"MacrossSessionId","gcLifetime":3600,"ProviderConfig":"127.0.0.1:6379"}`}))
 
 	v.Get("/get", func(self *macross.Context) error {
@@ -110,7 +110,7 @@ Maybe you will find the **memory** provider is a good example.
 	}
 
 	type Provider interface {
-		SessionInit(gclifetime int64, config string) error
+		SessionInit(gcLifetime int64, config string) error
 		SessionRead(sid string) (SessionStore, error)
 		SessionExist(sid string) bool
 		SessionRegenerate(oldsid, sid string) (SessionStore, error)
