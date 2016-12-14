@@ -12,7 +12,7 @@ func main() {
 
 	v := macross.New()
 	v.Use(recover.Recover())
-	//v.Use(session.Sessioner(session.Options{"file", `{"cookieName":"MacrossSessionId","gclifetime":3600,"ProviderConfig":"./data/session"}`}))
+	//v.Use(session.Sessioner(session.Options{"file", `{"cookieName":"MacrossSessionId","gcLifetime":3600,"ProviderConfig":"./data/session"}`}))
 	v.Use(session.Sessioner(session.Options{"redis", `{"cookieName":"MacrossSessionId","gcLifetime":3600,"ProviderConfig":"127.0.0.1:6379"}`}))
 
 	v.Get("/get", func(self *macross.Context) error {
