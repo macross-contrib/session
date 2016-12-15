@@ -30,20 +30,6 @@ type Options struct {
 	Config   string
 }
 
-/*
-type managerConfig struct {
-	CookieName      string `json:"cookieName"`
-	EnableSetCookie bool   `json:"enableSetCookie,omitempty"`
-	Gclifetime      int64  `json:"gcLifetime"`
-	Maxlifetime     int64  `json:"maxLifetime"`
-	Secure          bool   `json:"secure"`
-	CookieLifeTime  int    `json:"cookieLifeTime"`
-	ProviderConfig  string `json:"providerConfig"`
-	Domain          string `json:"domain"`
-	SessionIDLength int64  `json:"sessionIDLength"`
-}
-*/
-
 func init() {
 	gob.Register(url.Values{})
 }

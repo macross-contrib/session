@@ -53,7 +53,7 @@ type managerConfig struct {
 	CookieName      string `json:"cookieName"`
 	EnableSetCookie bool   `json:"enableSetCookie,omitempty"`
 	GcLifetime      int64  `json:"gcLifetime"`
-	Maxlifetime     int64  `json:"maxLifetime"`
+	MaxLifetime     int64  `json:"maxLifetime"`
 	Secure          bool   `json:"secure"`
 	CookieLifetime  int    `json:"cookieLifetime"`
 	ProviderConfig  string `json:"providerConfig"`
@@ -90,10 +90,10 @@ func NewManager(provideName, config string) (*Manager, error) {
 	if err != nil {
 		return nil, err
 	}
-	if cf.Maxlifetime == 0 {
-		cf.Maxlifetime = cf.GcLifetime
+	if cf.MaxLifetime == 0 {
+		cf.MaxLifetime = cf.GcLifetime
 	}
-	err = provider.SessionInit(cf.Maxlifetime, cf.ProviderConfig)
+	err = provider.SessionInit(cf.MaxLifetime, cf.ProviderConfig)
 	if err != nil {
 		return nil, err
 	}

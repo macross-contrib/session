@@ -36,7 +36,7 @@ First you must import it
 
 * Use **Cookie** as provider:
 
-		session.Options{"cookie", `{"cookieName":"MacrossSessionId","enableSetCookie":false,"gcLifetime":3600,"ProviderConfig":"{\"cookieName\":\"MacrossSessionId\",\"securityKey\":\"beegocookiehashkey\"}"}`}
+		session.Options{"cookie", `{"cookieName":"MacrossSessionId","enableSetCookie":false,"gcLifetime":3600,"ProviderConfig":"{\"cookieName\":\"MacrossSessionId\",\"securityKey\":\"Macrosscookiehashkey\"}"}`}
 
 
 Finally in the code you can use it like this
@@ -105,7 +105,7 @@ Maybe you will find the **memory** provider is a good example.
 		Get(key interface{}) interface{}      //get session value
 		Delete(key interface{}) error         //delete session value
 		SessionID() string                    //back current sessionID
-		SessionRelease(w http.ResponseWriter) // release the resource & save data to provider & return the data
+		SessionRelease(ctx *macross.Context) // release the resource & save data to provider & return the data
 		Flush() error                         //delete all data
 	}
 
@@ -115,7 +115,7 @@ Maybe you will find the **memory** provider is a good example.
 		SessionExist(sid string) bool
 		SessionRegenerate(oldsid, sid string) (SessionStore, error)
 		SessionDestroy(sid string) error
-		SessionAll() int //get all active session
+		SessionCount() int //get all active session
 		SessionGC()
 	}
 

@@ -76,7 +76,7 @@ func (st *CookieSessionStore) SessionRelease(ctx *macross.Context) {
 	cookie.SetPath("/")
 	cookie.SetHTTPOnly(true)
 	cookie.SetSecure(cookiepder.config.Secure)
-	cookie.SetExpire(time.Now().Add(time.Duration(cookiepder.config.Maxage) * time.Second))
+	cookie.SetExpire(time.Now().Add(time.Duration(cookiepder.config.MaxAge) * time.Second))
 
 	ctx.SetCookie(cookie)
 	return
@@ -88,25 +88,25 @@ type cookieConfig struct {
 	SecurityName string `json:"securityName"`
 	CookieName   string `json:"cookieName"`
 	Secure       bool   `json:"secure"`
-	Maxage       int    `json:"maxage"`
+	MaxAge       int    `json:"maxAge"`
 }
 
 // CookieProvider Cookie session provider
 type CookieProvider struct {
-	maxlifetime int64
+	maxLifetime int64
 	config      *cookieConfig
 	block       cipher.Block
 }
 
 // SessionInit Init cookie session provider with max lifetime and config json.
-// maxlifetime is ignored.
+// maxLifetime is ignored.
 // json config:
 // 	securityKey - hash string
 // 	blockKey - gob encode hash string. it's saved as aes crypto.
 // 	securityName - recognized name in encoded cookie string
 // 	cookieName - cookie name
-// 	maxage - cookie max life time.
-func (pder *CookieProvider) SessionInit(maxlifetime int64, config string) error {
+// 	maxAge - cookie max life time.
+func (pder *CookieProvider) SessionInit(maxLifetime int64, config string) error {
 	pder.config = &cookieConfig{}
 	err := json.Unmarshal([]byte(config), pder.config)
 	if err != nil {
@@ -122,7 +122,7 @@ func (pder *CookieProvider) SessionInit(maxlifetime int64, config string) error 
 	if err != nil {
 		return err
 	}
-	pder.maxlifetime = maxlifetime
+	pder.maxLifetime = maxLifetime
 	return nil
 }
 
@@ -132,7 +132,7 @@ func (pder *CookieProvider) SessionRead(sid string) (Store, error) {
 	maps, _ := decodeCookie(pder.block,
 		pder.config.SecurityKey,
 		pder.config.SecurityName,
-		sid, pder.maxlifetime)
+		sid, pder.maxLifetime)
 	if maps == nil {
 		maps = make(map[interface{}]interface{})
 	}

@@ -16,7 +16,7 @@ import (
 
 var (
 	filepder      = &FileProvider{}
-	gcmaxLifetime int64
+	gcMaxLifetime int64
 )
 
 // FileSessionStore File session store
@@ -166,7 +166,7 @@ func (fp *FileProvider) SessionGC() {
 	filepder.lock.Lock()
 	defer filepder.lock.Unlock()
 
-	gcmaxLifetime = fp.maxLifetime
+	gcMaxLifetime = fp.maxLifetime
 	filepath.Walk(fp.savePath, gcpath)
 }
 
@@ -244,7 +244,7 @@ func gcpath(path string, info os.FileInfo, err error) error {
 	if info.IsDir() {
 		return nil
 	}
-	if (info.ModTime().Unix() + gcmaxLifetime) < time.Now().Unix() {
+	if (info.ModTime().Unix() + gcMaxLifetime) < time.Now().Unix() {
 		os.Remove(path)
 	}
 	return nil
