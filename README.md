@@ -87,7 +87,7 @@ func main() {
 		return self.String("ok")
 	})
 
-	v.Run(":9000")
+	v.Listen(":9000")
 }
 ```
 

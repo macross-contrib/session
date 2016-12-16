@@ -43,5 +43,5 @@ func main() {
 		return self.String("ok")
 	})
 
-	v.Run(":8080")
+	v.Listen(":8080")
 }
