@@ -60,8 +60,10 @@ func setup(op ...Options) error {
 
 // Sessioner Macross session 中间件
 func Sessioner(op ...Options) macross.Handler {
-	if err := setup(op...); err != nil {
-		log.Fatalln("session errors:", err)
+	if GlobalSessions == nil {
+		if err := setup(op...); err != nil {
+			log.Fatalln("session errors:", err)
+		}
 	}
 	return func(c *macross.Context) error {
 		if GlobalSessions == nil {
