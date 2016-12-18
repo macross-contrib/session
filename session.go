@@ -221,7 +221,7 @@ func (manager *Manager) SessionRegenerateID(ctx *macross.Context) (session Store
 	if err != nil || cookie.Value() == "" {
 		//delete old cookie
 		session, _ = manager.provider.SessionRead(sid)
-		c = &macross.Cookie{}
+		c = new(macross.Cookie)
 		c.SetName(manager.config.CookieName)
 		c.SetValue(url.QueryEscape(sid))
 		c.SetPath("/")
@@ -233,7 +233,7 @@ func (manager *Manager) SessionRegenerateID(ctx *macross.Context) (session Store
 		oldsid, _ := url.QueryUnescape(cookie.Value())
 		session, _ = manager.provider.SessionRegenerate(oldsid, sid)
 
-		c = &macross.Cookie{}
+		c = new(macross.Cookie)
 		c.SetName(cookie.Name())
 		c.SetValue(url.QueryEscape(sid))
 		c.SetPath("/")
