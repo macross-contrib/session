@@ -153,7 +153,7 @@ func (manager *Manager) SessionStart(ctx *macross.Context) (session Store, err e
 	}
 
 	session, err = manager.provider.SessionRead(sid)
-	cookie := &macross.Cookie{}
+	cookie := new(macross.Cookie)
 	cookie.SetName(manager.config.CookieName)
 	cookie.SetValue(url.QueryEscape(sid))
 	cookie.SetPath("/")
