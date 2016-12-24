@@ -88,7 +88,7 @@ func TestParseConfig(t *testing.T) {
 		t.Fatal("parseconfig get gcLifetime error")
 	}
 
-	cc := `{"cookieName":"MacrossSessionId","enableSetCookie":false,"gcLifetime":3600,"ProviderConfig":"{\"cookieName\":\"MacrossSessionId\",\"securityKey\":\"Macrosscookiehashkey\"}"}`
+	cc := `{"cookieName":"MacrossSessionId","enableSetCookie":false,"gcLifetime":3600,"providerConfig":"{\"cookieName\":\"MacrossSessionId\",\"securityKey\":\"Macrosscookiehashkey\"}"}`
 	cf2 := new(managerConfig)
 	cf2.EnableSetCookie = true
 	err = json.Unmarshal([]byte(cc), cf2)
@@ -107,12 +107,12 @@ func TestParseConfig(t *testing.T) {
 	cconfig := new(cookieConfig)
 	err = json.Unmarshal([]byte(cf2.ProviderConfig), cconfig)
 	if err != nil {
-		t.Fatal("parse ProviderConfig err,", err)
+		t.Fatal("parse providerConfig err,", err)
 	}
 	if cconfig.CookieName != "MacrossSessionId" {
-		t.Fatal("ProviderConfig get cookieName error")
+		t.Fatal("providerConfig get cookieName error")
 	}
 	if cconfig.SecurityKey != "Macrosscookiehashkey" {
-		t.Fatal("ProviderConfig get securityKey error")
+		t.Fatal("providerConfig get securityKey error")
 	}
 }

@@ -13,9 +13,9 @@ var GlobalSessions *Manager
 
 var defaultOtions = Options{"memory", `{"cookieName":"MacrossSessionId","gcLifetime":3600}`}
 
-//var defaultOtions = Options{"file", `{"cookieName":"MacrossSessionId","gcLifetime":3600,"ProviderConfig":"./data/session"}`}
+//var defaultOtions = Options{"file", `{"cookieName":"MacrossSessionId","gcLifetime":3600,"providerConfig":"./data/session"}`}
 
-//var defaultOtions = Options{"redis", `{"cookieName":"MacrossSessionId","gcLifetime":3600,"ProviderConfig":"127.0.0.1:6379"}`}
+//var defaultOtions = Options{"redis", `{"cookieName":"MacrossSessionId","gcLifetime":3600,"providerConfig":"127.0.0.1:6379"}`}
 
 const (
 	CONTEXT_SESSION_KEY = "_SESSION_STORE"

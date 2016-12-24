@@ -28,15 +28,15 @@ First you must import it
 
 * Use **file** as provider, the last param is the path where you want file to be stored:
 
-	    session.Options{"file", `{"cookieName":"MacrossSessionId","gcLifetime":3600,"ProviderConfig":"./data/session"}`}
+	    session.Options{"file", `{"cookieName":"MacrossSessionId","gcLifetime":3600,"providerConfig":"./data/session"}`}
 
 * Use **Redis** as provider, the last param is the Redis conn address,poolsize,password:
 
-		session.Options{"redis", `{"cookieName":"MacrossSessionId","gcLifetime":3600,"ProviderConfig":"127.0.0.1:6379,100,macross"}`}
+		session.Options{"redis", `{"cookieName":"MacrossSessionId","gcLifetime":3600,"providerConfig":"127.0.0.1:6379,100,macross"}`}
 
 * Use **Cookie** as provider:
 
-		session.Options{"cookie", `{"cookieName":"MacrossSessionId","enableSetCookie":false,"gcLifetime":3600,"ProviderConfig":"{\"cookieName\":\"MacrossSessionId\",\"securityKey\":\"Macrosscookiehashkey\"}"}`}
+		session.Options{"cookie", `{"cookieName":"MacrossSessionId","enableSetCookie":false,"gcLifetime":3600,"providerConfig":"{\"cookieName\":\"MacrossSessionId\",\"securityKey\":\"Macrosscookiehashkey\"}"}`}
 
 
 Finally in the code you can use it like this
@@ -56,8 +56,8 @@ func main() {
 
 	v := macross.New()
 	v.Use(recover.Recover())
-	v.Use(session.Sessioner(session.Options{"file", `{"cookieName":"MacrossSessionId","gcLifetime":3600,"ProviderConfig":"./data/session"}`}))
-	//v.Use(session.Sessioner(session.Options{"redis", `{"cookieName":"MacrossSessionId","gcLifetime":3600,"ProviderConfig":"127.0.0.1:6379"}`}))
+	v.Use(session.Sessioner(session.Options{"file", `{"cookieName":"MacrossSessionId","gcLifetime":3600,"providerConfig":"./data/session"}`}))
+	//v.Use(session.Sessioner(session.Options{"redis", `{"cookieName":"MacrossSessionId","gcLifetime":3600,"providerConfig":"127.0.0.1:6379"}`}))
 
 	v.Get("/get", func(self *macross.Context) error {
 		sess := session.GetStore(self)
