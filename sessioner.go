@@ -116,33 +116,45 @@ func GetStore(c *macross.Context) Store {
 	if store != nil {
 		return store.(Store)
 	}
-
 	return nil
 }
 
 func GetFlash(c *macross.Context) *Flash {
-	return GetStore(c).Get(SESSION_FLASH_KEY).(*Flash)
+	if store := GetStore(c); store != nil {
+		if tmp := store.Get(SESSION_FLASH_KEY); tmp != nil {
+			return tmp.(*Flash)
+		}
+	}
+	return nil
 }
 
 func FlashValue(c *macross.Context) Flash {
-	return c.Get(CONTEXT_FLASH_KEY).(Flash)
+	if tmp := c.Get(CONTEXT_FLASH_KEY); tmp != nil {
+		return tmp.(Flash)
+	}
+	return Flash{}
 }
 
 func SaveInput(c *macross.Context) {
-	GetStore(c).Set(SESSION_INPUT_KEY, url.Values(c.FormParams()))
+	if store := GetStore(c); store != nil {
+		store.Set(SESSION_INPUT_KEY, url.Values(c.FormParams()))
+	}
 }
 
 func GetInput(c *macross.Context) url.Values {
-	input := GetStore(c).Get(SESSION_INPUT_KEY)
-	if input != nil {
-		return input.(url.Values)
+	if store := GetStore(c); store != nil {
+		input := store.Get(SESSION_INPUT_KEY)
+		if input != nil {
+			return input.(url.Values)
+		}
 	}
-
 	return url.Values{}
 }
 
 func CleanInput(c *macross.Context) {
-	GetStore(c).Set(SESSION_INPUT_KEY, url.Values{})
+	if store := GetStore(c); store != nil {
+		store.Set(SESSION_INPUT_KEY, url.Values{})
+	}
 }
 
 func NewFlash() *Flash {
