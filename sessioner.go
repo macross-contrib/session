@@ -75,7 +75,9 @@ func Sessioner(op ...Options) macross.Handler {
 			return err
 		}
 
+		c.Session = sess
 		c.Set(CONTEXT_FLASH_KEY, Flash{})
+
 		flashVals := url.Values{}
 		flashIf := sess.Get(SESSION_FLASH_KEY)
 		if flashIf != nil {
@@ -100,7 +102,6 @@ func Sessioner(op ...Options) macross.Handler {
 		defer func() {
 			//log.Println("save session", sess)
 			sess.Set(SESSION_FLASH_KEY, url.QueryEscape(f.Encode()))
-			c.Session = sess
 			sess.SessionRelease(c)
 		}()
 
