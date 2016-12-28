@@ -17,9 +17,9 @@ type Store interface {
 	Set(key, value interface{}) error    //set session value
 	Get(key interface{}) interface{}     //get session value
 	Delete(key interface{}) error        //delete session value
+	Clean() error                        //delete all data
 	SessionID() string                   //back current sessionID
 	SessionRelease(ctx *macross.Context) // release the resource & save data to provider & return the data
-	Clean() error                        //delete all data
 }
 
 // Provider contains global session methods and saved SessionStores.
