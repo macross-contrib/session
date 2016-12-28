@@ -97,7 +97,7 @@ func TestWrite(t *testing.T) {
 			t.Errorf("Send(%v) returned error %v", tt.args, err)
 			continue
 		}
-		c.Flush()
+		c.Clean()
 		actual := buf.String()
 		if actual != tt.expected {
 			t.Errorf("Send(%v) = %q, want %q", tt.args, actual, tt.expected)
@@ -300,8 +300,8 @@ func TestPipelineCommands(t *testing.T) {
 			t.Fatalf("Send(%v) returned error %v", cmd.args, err)
 		}
 	}
-	if err := c.Flush(); err != nil {
-		t.Errorf("Flush() returned error %v", err)
+	if err := c.Clean(); err != nil {
+		t.Errorf("Clean() returned error %v", err)
 	}
 	for _, cmd := range testCommands {
 		actual, err := c.Receive()
@@ -354,7 +354,7 @@ func TestRecvBeforeSend(t *testing.T) {
 	}()
 	time.Sleep(time.Millisecond)
 	c.Send("PING")
-	c.Flush()
+	c.Clean()
 	<-done
 	_, err = c.Do("")
 	if err != nil {
@@ -420,7 +420,7 @@ func TestReadTimeout(t *testing.T) {
 		t.Fatalf("c1.Err() = nil, expect error")
 	}
 
-	// Send/Flush/Receive
+	// Send/Clean/Receive
 
 	c2, err := redis.Dial(l.Addr().Network(), l.Addr().String(), redis.DialReadTimeout(time.Millisecond))
 	if err != nil {
@@ -429,7 +429,7 @@ func TestReadTimeout(t *testing.T) {
 	defer c2.Close()
 
 	c2.Send("PING")
-	c2.Flush()
+	c2.Clean()
 	_, err = c2.Receive()
 	if err == nil {
 		t.Fatalf("c2.Receive() returned nil, expect error")

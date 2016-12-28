@@ -70,33 +70,33 @@ func (c PubSubConn) Close() error {
 // Subscribe subscribes the connection to the specified channels.
 func (c PubSubConn) Subscribe(channel ...interface{}) error {
 	c.Conn.Send("SUBSCRIBE", channel...)
-	return c.Conn.Flush()
+	return c.Conn.Clean()
 }
 
 // PSubscribe subscribes the connection to the given patterns.
 func (c PubSubConn) PSubscribe(channel ...interface{}) error {
 	c.Conn.Send("PSUBSCRIBE", channel...)
-	return c.Conn.Flush()
+	return c.Conn.Clean()
 }
 
 // Unsubscribe unsubscribes the connection from the given channels, or from all
 // of them if none is given.
 func (c PubSubConn) Unsubscribe(channel ...interface{}) error {
 	c.Conn.Send("UNSUBSCRIBE", channel...)
-	return c.Conn.Flush()
+	return c.Conn.Clean()
 }
 
 // PUnsubscribe unsubscribes the connection from the given patterns, or from all
 // of them if none is given.
 func (c PubSubConn) PUnsubscribe(channel ...interface{}) error {
 	c.Conn.Send("PUNSUBSCRIBE", channel...)
-	return c.Conn.Flush()
+	return c.Conn.Clean()
 }
 
 // Ping sends a PING to the server with the specified data.
 func (c PubSubConn) Ping(data string) error {
 	c.Conn.Send("PING", data)
-	return c.Conn.Flush()
+	return c.Conn.Clean()
 }
 
 // Receive returns a pushed message as a Subscription, Message, PMessage, Pong

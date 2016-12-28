@@ -31,7 +31,7 @@ import (
 var nowFunc = time.Now // for testing
 
 // ErrPoolExhausted is returned from a pool connection method (Do, Send,
-// Receive, Flush, Err) when the maximum number of database connections in the
+// Receive, Clean, Err) when the maximum number of database connections in the
 // pool has been reached.
 var ErrPoolExhausted = errors.New("redigo: connection pool exhausted")
 
@@ -152,7 +152,7 @@ func NewPool(newFn func() (Conn, error), maxIdle int) *Pool {
 // Get gets a connection. The application must close the returned connection.
 // This method always returns a valid connection so that applications can defer
 // error handling to the first use of the connection. If there is an error
-// getting an underlying connection, then the connection Err, Do, Send, Flush
+// getting an underlying connection, then the connection Err, Do, Send, Clean
 // and Receive methods return that error.
 func (p *Pool) Get() Conn {
 	c, err := p.get()
@@ -346,7 +346,7 @@ func (pc *pooledConnection) Close() error {
 		// a sentinel value and read until we see that value.
 		sentinelOnce.Do(initSentinel)
 		c.Send("ECHO", sentinel)
-		c.Flush()
+		c.Clean()
 		for {
 			p, err := c.Receive()
 			if err != nil {
@@ -379,8 +379,8 @@ func (pc *pooledConnection) Send(commandName string, args ...interface{}) error 
 	return pc.c.Send(commandName, args...)
 }
 
-func (pc *pooledConnection) Flush() error {
-	return pc.c.Flush()
+func (pc *pooledConnection) Clean() error {
+	return pc.c.Clean()
 }
 
 func (pc *pooledConnection) Receive() (reply interface{}, err error) {
@@ -393,5 +393,5 @@ func (ec errorConnection) Do(string, ...interface{}) (interface{}, error) { retu
 func (ec errorConnection) Send(string, ...interface{}) error              { return ec.err }
 func (ec errorConnection) Err() error                                     { return ec.err }
 func (ec errorConnection) Close() error                                   { return ec.err }
-func (ec errorConnection) Flush() error                                   { return ec.err }
+func (ec errorConnection) Clean() error                                   { return ec.err }
 func (ec errorConnection) Receive() (interface{}, error)                  { return nil, ec.err }

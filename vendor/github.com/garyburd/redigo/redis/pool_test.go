@@ -246,7 +246,7 @@ func TestPoolConcurrenSendReceive(t *testing.T) {
 		done <- err
 	}()
 	c.Send("PING")
-	c.Flush()
+	c.Clean()
 	err := <-done
 	if err != nil {
 		t.Fatalf("Receive() returned error %v", err)

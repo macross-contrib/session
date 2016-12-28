@@ -480,11 +480,11 @@ func (c *conn) Send(cmd string, args ...interface{}) error {
 	return nil
 }
 
-func (c *conn) Flush() error {
+func (c *conn) Clean() error {
 	if c.writeTimeout != 0 {
 		c.conn.SetWriteDeadline(time.Now().Add(c.writeTimeout))
 	}
-	if err := c.bw.Flush(); err != nil {
+	if err := c.bw.Clean(); err != nil {
 		return c.fatal(err)
 	}
 	return nil
@@ -535,7 +535,7 @@ func (c *conn) Do(cmd string, args ...interface{}) (interface{}, error) {
 		}
 	}
 
-	if err := c.bw.Flush(); err != nil {
+	if err := c.bw.Clean(); err != nil {
 		return nil, c.fatal(err)
 	}
 

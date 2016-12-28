@@ -36,8 +36,8 @@ func TestConnMux(t *testing.T) {
 	c2 := m.Get()
 	c1.Send("ECHO", "hello")
 	c2.Send("ECHO", "world")
-	c1.Flush()
-	c2.Flush()
+	c1.Clean()
+	c2.Clean()
 	s, err := redis.String(c1.Receive())
 	if err != nil {
 		t.Fatal(err)
@@ -77,7 +77,7 @@ func TestConnMuxClose(t *testing.T) {
 	if err := c2.Send("ECHO", "world"); err != nil {
 		t.Fatal(err)
 	}
-	if err := c2.Flush(); err != nil {
+	if err := c2.Clean(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -244,7 +244,7 @@ func BenchmarkPipelineConcurrency(b *testing.B) {
 				id := pipeline.Next()
 				pipeline.StartRequest(id)
 				c.Send("PING")
-				c.Flush()
+				c.Clean()
 				pipeline.EndRequest(id)
 				pipeline.StartResponse(id)
 				_, err := c.Receive()

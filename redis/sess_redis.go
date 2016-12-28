@@ -51,8 +51,8 @@ func (rs *SessionStore) Delete(key interface{}) error {
 	return nil
 }
 
-// Flush clear all values in redis session
-func (rs *SessionStore) Flush() error {
+// Clean clear all values in redis session
+func (rs *SessionStore) Clean() error {
 	rs.lock.Lock()
 	defer rs.lock.Unlock()
 	rs.values = make(map[interface{}]interface{})

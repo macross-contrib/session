@@ -72,9 +72,9 @@ func TestScript(t *testing.T) {
 		t.Errorf("s.SendHash(c, ...) returned %v", err)
 	}
 
-	err = c.Flush()
+	err = c.Clean()
 	if err != nil {
-		t.Errorf("c.Flush() returned %v", err)
+		t.Errorf("c.Clean() returned %v", err)
 	}
 
 	v, err = c.Receive()
@@ -87,9 +87,9 @@ func TestScript(t *testing.T) {
 		t.Errorf("s.Send(c, ...) returned %v", err)
 	}
 
-	err = c.Flush()
+	err = c.Clean()
 	if err != nil {
-		t.Errorf("c.Flush() returned %v", err)
+		t.Errorf("c.Clean() returned %v", err)
 	}
 
 	v, err = c.Receive()

@@ -47,8 +47,8 @@ func (st *CookieSessionStore) Delete(key interface{}) error {
 	return nil
 }
 
-// Flush Clean all values in cookie session
-func (st *CookieSessionStore) Flush() error {
+// Clean Clean all values in cookie session
+func (st *CookieSessionStore) Clean() error {
 	st.lock.Lock()
 	defer st.lock.Unlock()
 	st.values = make(map[interface{}]interface{})

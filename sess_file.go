@@ -52,8 +52,8 @@ func (fs *FileSessionStore) Delete(key interface{}) error {
 	return nil
 }
 
-// Flush Clean all values in file session
-func (fs *FileSessionStore) Flush() error {
+// Clean Clean all values in file session
+func (fs *FileSessionStore) Clean() error {
 	fs.lock.Lock()
 	defer fs.lock.Unlock()
 	fs.values = make(map[interface{}]interface{})

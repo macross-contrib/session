@@ -45,8 +45,8 @@ func (st *MemSessionStore) Delete(key interface{}) error {
 	return nil
 }
 
-// Flush clear all values in memory session
-func (st *MemSessionStore) Flush() error {
+// Clean clear all values in memory session
+func (st *MemSessionStore) Clean() error {
 	st.lock.Lock()
 	defer st.lock.Unlock()
 	st.value = make(map[interface{}]interface{})

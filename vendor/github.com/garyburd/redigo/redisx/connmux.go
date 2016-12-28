@@ -70,7 +70,7 @@ func (c *muxConn) send(flush bool, cmd string, args ...interface{}) error {
 	p.sendID++
 	err := p.c.Send(cmd, args...)
 	if flush {
-		err = p.c.Flush()
+		err = p.c.Clean()
 	}
 	p.sendMu.Unlock()
 	return err
@@ -80,10 +80,10 @@ func (c *muxConn) Send(cmd string, args ...interface{}) error {
 	return c.send(false, cmd, args...)
 }
 
-func (c *muxConn) Flush() error {
+func (c *muxConn) Clean() error {
 	p := c.p
 	p.sendMu.Lock()
-	err := p.c.Flush()
+	err := p.c.Clean()
 	p.sendMu.Unlock()
 	return err
 }
@@ -133,7 +133,7 @@ func (c *muxConn) Close() error {
 	if len(c.ids) == 0 {
 		return nil
 	}
-	c.Flush()
+	c.Clean()
 	for _ = range c.ids {
 		_, err = c.Receive()
 	}
