@@ -120,7 +120,9 @@ func GetStore(c *macross.Context) Store {
 func GetFlash(c *macross.Context) *Flash {
 	if store := GetStore(c); store != nil {
 		if tmp := store.Get(SESSION_FLASH_KEY); tmp != nil {
-			return tmp.(*Flash)
+			if flash, okay := tmp.(*Flash); okay {
+				return flash
+			}
 		}
 	}
 	return NewFlash()
