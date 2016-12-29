@@ -112,7 +112,9 @@ func Sessioner(op ...Options) macross.Handler {
 func GetStore(c *macross.Context) Store {
 	store := c.Get(CONTEXT_SESSION_KEY)
 	if store != nil {
-		return store.(Store)
+		if s, okay := store.(Store); okay {
+			return s
+		}
 	}
 	return nil
 }
