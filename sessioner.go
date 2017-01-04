@@ -20,7 +20,7 @@ var defaultOtions = Options{"memory", `{"cookieName":"MacrossSessionId","gcLifet
 const (
 	CONTEXT_SESSION_KEY = "_SESSION_STORE"
 	COOKIE_FLASH_KEY    = "_COOKIE_FLASH"
-	CONTEXT_FLASH_KEY   = "_FLASH_VALUE"
+	CONTEXT_FLASH_KEY   = "Flash"
 	SESSION_FLASH_KEY   = "_SESSION_FLASH"
 	SESSION_INPUT_KEY   = "_SESSION_INPUT"
 )
@@ -101,36 +101,46 @@ func Sessioner(op ...Options) macross.Handler {
 			RawStore: sess,
 			Manager:  GlobalManager,
 		}
-		c.Flash = new(macross.Flash)
-		c.Set(CONTEXT_FLASH_KEY, Flash{})
 
+		var has bool
 		flashVals := url.Values{}
-		flashIf := sess.Get(SESSION_FLASH_KEY)
+		flashIf := c.Session.Get(SESSION_FLASH_KEY)
 		if flashIf != nil {
-			vals, _ := url.QueryUnescape(flashIf.(string))
-			flashVals, _ = url.ParseQuery(vals)
-			if len(flashVals) > 0 {
-				flash := macross.Flash{}
-				flash.ErrorMsg = flashVals.Get("error")
-				flash.WarningMsg = flashVals.Get("warning")
-				flash.InfoMsg = flashVals.Get("info")
-				flash.SuccessMsg = flashVals.Get("success")
+			//vals, _ := url.QueryUnescape(flashIf.(string))
+			if flasho, okay := flashIf.(*macross.Flash); okay {
+				if flashVals, _ = url.ParseQuery(flasho.Encode()); len(flashVals) > 0 {
+					flash := macross.Flash{}
+					flash.ErrorMsg = flashVals.Get("error")
+					flash.WarningMsg = flashVals.Get("warning")
+					flash.InfoMsg = flashVals.Get("info")
+					flash.SuccessMsg = flashVals.Get("success")
 
-				c.Flash = &flash
-				// flash先暂存到context里面
-				c.Set(CONTEXT_FLASH_KEY, flash)
-
+					flash.Ctx = c
+					if flasho.FlashNow {
+						c.Set(CONTEXT_FLASH_KEY, flash)
+					} else {
+						flash.Values = flasho.Values
+						flash.Ctx.Set(CONTEXT_FLASH_KEY, flash)
+						has = true
+					}
+					c.Flash = &flash
+				}
 			}
+
 		}
 
-		f := NewFlash(c)
-		c.Flash = f
+		if !has {
+			c.Flash = NewFlash(c)
+			c.Set(CONTEXT_FLASH_KEY, c.Flash)
+		}
+
 		c.Set(CONTEXT_SESSION_KEY, c.Session)
 
 		defer func() {
 			//log.Println("save session", sess)
-			sess.Set(SESSION_FLASH_KEY, url.QueryEscape(f.Encode()))
-			sess.Release(c)
+			//sess.Set(SESSION_FLASH_KEY, url.QueryEscape(f.Encode()))
+			c.Session.Set(SESSION_FLASH_KEY, c.Flash)
+			c.Session.Release(c)
 		}()
 
 		return c.Next()
@@ -158,11 +168,11 @@ func GetFlash(c *macross.Context) *macross.Flash {
 	return NewFlash(c)
 }
 
-func FlashValue(c *macross.Context) Flash {
+func FlashValue(c *macross.Context) macross.Flash {
 	if tmp := c.Get(CONTEXT_FLASH_KEY); tmp != nil {
-		return tmp.(Flash)
+		return tmp.(macross.Flash)
 	}
-	return Flash{}
+	return macross.Flash{}
 }
 
 func SaveInput(c *macross.Context) {
@@ -188,34 +198,5 @@ func CleanInput(c *macross.Context) {
 }
 
 func NewFlash(ctx *macross.Context) *macross.Flash {
-	return &macross.Flash{ctx, url.Values{}, "", "", "", ""}
-}
-
-type Flash struct {
-	url.Values
-	ErrorMsg, WarningMsg, InfoMsg, SuccessMsg string
-}
-
-func (f *Flash) set(name, msg string) {
-	f.Set(name, msg)
-}
-
-func (f *Flash) Error(msg string) {
-	f.ErrorMsg = msg
-	f.set("error", msg)
-}
-
-func (f *Flash) Warning(msg string) {
-	f.WarningMsg = msg
-	f.set("warning", msg)
-}
-
-func (f *Flash) Info(msg string) {
-	f.InfoMsg = msg
-	f.set("info", msg)
-}
-
-func (f *Flash) Success(msg string) {
-	f.SuccessMsg = msg
-	f.set("success", msg)
+	return &macross.Flash{macross.FlashNow, ctx, url.Values{}, "", "", "", ""}
 }
