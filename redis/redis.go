@@ -51,8 +51,8 @@ func (rs *SessionStore) Delete(key interface{}) error {
 	return nil
 }
 
-// Clean clear all values in redis session
-func (rs *SessionStore) Clean() error {
+// Flush clear all values in redis session
+func (rs *SessionStore) Flush() error {
 	rs.lock.Lock()
 	defer rs.lock.Unlock()
 	rs.values = make(map[interface{}]interface{})
@@ -60,13 +60,14 @@ func (rs *SessionStore) Clean() error {
 }
 
 // SessionID get redis session id
-func (rs *SessionStore) SessionID() string {
+func (rs *SessionStore) ID() string {
 	return rs.sid
 }
 
 // SessionRelease save session values to redis
-func (rs *SessionStore) SessionRelease(ctx *macross.Context) {
-	b, err := session.EncodeGob(rs.values)
+func (rs *SessionStore) Release(ctx *macross.Context) (err error) {
+	var b []byte
+	b, err = session.EncodeGob(rs.values)
 	if err != nil {
 		return
 	}
@@ -74,6 +75,7 @@ func (rs *SessionStore) SessionRelease(ctx *macross.Context) {
 	defer c.Close()
 
 	c.Do("SETEX", rs.sid, rs.maxLifetime, string(b))
+	return
 }
 
 // Provider redis session provider
@@ -86,10 +88,10 @@ type Provider struct {
 	poollist    *redis.Pool
 }
 
-// SessionInit init redis session
+// Init init redis session
 // savepath like redis server addr,pool size,password,dbnum
 // e.g. 127.0.0.1:6379,100,astaxie,0
-func (rp *Provider) SessionInit(maxLifetime int64, savePath string) error {
+func (rp *Provider) Init(maxLifetime int64, savePath string) error {
 	rp.maxLifetime = maxLifetime
 	configs := strings.Split(savePath, ",")
 	if len(configs) > 0 {
@@ -140,8 +142,8 @@ func (rp *Provider) SessionInit(maxLifetime int64, savePath string) error {
 	return rp.poollist.Get().Err()
 }
 
-// SessionRead read redis session by sid
-func (rp *Provider) SessionRead(sid string) (session.Store, error) {
+// Read read redis session by sid
+func (rp *Provider) Read(sid string) (macross.RawStore, error) {
 	c := rp.poollist.Get()
 	defer c.Close()
 
@@ -160,8 +162,8 @@ func (rp *Provider) SessionRead(sid string) (session.Store, error) {
 	return rs, nil
 }
 
-// SessionExist check redis session exist by sid
-func (rp *Provider) SessionExist(sid string) bool {
+// Exist check redis session exist by sid
+func (rp *Provider) Exist(sid string) bool {
 	c := rp.poollist.Get()
 	defer c.Close()
 
@@ -171,8 +173,8 @@ func (rp *Provider) SessionExist(sid string) bool {
 	return true
 }
 
-// SessionRegenerate generate new sid for redis session
-func (rp *Provider) SessionRegenerate(oldsid, sid string) (session.Store, error) {
+// Regenerate generate new sid for redis session
+func (rp *Provider) Regenerate(oldsid, sid string) (macross.RawStore, error) {
 	c := rp.poollist.Get()
 	defer c.Close()
 
@@ -201,8 +203,8 @@ func (rp *Provider) SessionRegenerate(oldsid, sid string) (session.Store, error)
 	return rs, nil
 }
 
-// SessionDestroy delete redis session by id
-func (rp *Provider) SessionDestroy(sid string) error {
+// Destory delete redis session by id
+func (rp *Provider) Destory(sid string) error {
 	c := rp.poollist.Get()
 	defer c.Close()
 
@@ -210,13 +212,13 @@ func (rp *Provider) SessionDestroy(sid string) error {
 	return nil
 }
 
-// SessionGC Impelment method, no used.
-func (rp *Provider) SessionGC() {
+// GC Impelment method, no used.
+func (rp *Provider) GC() {
 	return
 }
 
 // SessionAll return all activeSession
-func (rp *Provider) SessionCount() int {
+func (rp *Provider) Count() int {
 	return 0
 }
 

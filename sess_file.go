@@ -52,22 +52,23 @@ func (fs *FileSessionStore) Delete(key interface{}) error {
 	return nil
 }
 
-// Clean Clean all values in file session
-func (fs *FileSessionStore) Clean() error {
+// Flush Clean all values in file session
+func (fs *FileSessionStore) Flush() error {
 	fs.lock.Lock()
 	defer fs.lock.Unlock()
 	fs.values = make(map[interface{}]interface{})
 	return nil
 }
 
-// SessionID Get file session store id
-func (fs *FileSessionStore) SessionID() string {
+// ID Get file session store id
+func (fs *FileSessionStore) ID() string {
 	return fs.sid
 }
 
 // SessionRelease Write file session to local file with Gob string
-func (fs *FileSessionStore) SessionRelease(ctx *macross.Context) {
-	b, err := EncodeGob(fs.values)
+func (fs *FileSessionStore) Release(ctx *macross.Context) (err error) {
+	var b []byte
+	b, err = EncodeGob(fs.values)
 	if err != nil {
 		return
 	}
@@ -84,6 +85,7 @@ func (fs *FileSessionStore) SessionRelease(ctx *macross.Context) {
 	f.Seek(0, 0)
 	f.Write(b)
 	f.Close()
+	return
 }
 
 // FileProvider File session provider
@@ -93,18 +95,18 @@ type FileProvider struct {
 	savePath    string
 }
 
-// SessionInit Init file session provider.
+// Init Init file session provider.
 // savePath sets the session files path.
-func (fp *FileProvider) SessionInit(maxLifetime int64, savePath string) error {
+func (fp *FileProvider) Init(maxLifetime int64, savePath string) error {
 	fp.maxLifetime = maxLifetime
 	fp.savePath = savePath
 	return nil
 }
 
-// SessionRead Read file session by sid.
+// Read Read file session by sid.
 // if file is not exist, create it.
 // the file path is generated from sid string.
-func (fp *FileProvider) SessionRead(sid string) (Store, error) {
+func (fp *FileProvider) Read(sid string) (macross.RawStore, error) {
 	filepder.lock.Lock()
 	defer filepder.lock.Unlock()
 
@@ -140,9 +142,9 @@ func (fp *FileProvider) SessionRead(sid string) (Store, error) {
 	return ss, nil
 }
 
-// SessionExist Check file session exist.
+// Exist Check file session exist.
 // it checkes the file named from sid exist or not.
-func (fp *FileProvider) SessionExist(sid string) bool {
+func (fp *FileProvider) Exist(sid string) bool {
 	filepder.lock.Lock()
 	defer filepder.lock.Unlock()
 
@@ -153,16 +155,16 @@ func (fp *FileProvider) SessionExist(sid string) bool {
 	return false
 }
 
-// SessionDestroy Remove all files in this save path
-func (fp *FileProvider) SessionDestroy(sid string) error {
+// Destory Remove all files in this save path
+func (fp *FileProvider) Destory(sid string) error {
 	filepder.lock.Lock()
 	defer filepder.lock.Unlock()
 	os.Remove(path.Join(fp.savePath, string(sid[0]), string(sid[1]), sid))
 	return nil
 }
 
-// SessionGC Recycle files in save path
-func (fp *FileProvider) SessionGC() {
+// GC Recycle files in save path
+func (fp *FileProvider) GC() {
 	filepder.lock.Lock()
 	defer filepder.lock.Unlock()
 
@@ -172,7 +174,7 @@ func (fp *FileProvider) SessionGC() {
 
 // SessionCount Get active file session number.
 // it walks save path to count files.
-func (fp *FileProvider) SessionCount() int {
+func (fp *FileProvider) Count() int {
 	a := &activeSession{}
 	err := filepath.Walk(fp.savePath, func(path string, f os.FileInfo, err error) error {
 		return a.visit(path, f, err)
@@ -184,9 +186,9 @@ func (fp *FileProvider) SessionCount() int {
 	return a.total
 }
 
-// SessionRegenerate Generate new sid for file session.
+// Regenerate Generate new sid for file session.
 // it delete old file and create new file named from new sid.
-func (fp *FileProvider) SessionRegenerate(oldsid, sid string) (Store, error) {
+func (fp *FileProvider) Regenerate(oldsid, sid string) (macross.RawStore, error) {
 	filepder.lock.Lock()
 	defer filepder.lock.Unlock()
 

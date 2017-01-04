@@ -16,10 +16,8 @@ func main() {
 	v.Use(session.Sessioner(session.Options{"redis", `{"cookieName":"MacrossSessionId","gcLifetime":3600,"providerConfig":"127.0.0.1:6379"}`}))
 
 	v.Get("/get", func(self *macross.Context) error {
-		sess := session.GetStore(self)
-
 		value := "nil"
-		valueIf := sess.Get("key")
+		valueIf := self.Session.Get("key")
 		if valueIf != nil {
 			value = valueIf.(string)
 		}
@@ -29,14 +27,13 @@ func main() {
 	})
 
 	v.Get("/set", func(self *macross.Context) error {
-		sess := session.GetStore(self)
 
 		val := self.QueryParam("v")
 		if len(val) == 0 {
 			val = "value"
 		}
 
-		err := sess.Set("key", val)
+		err := self.Session.Set("key", val)
 		if err != nil {
 			log.Printf("sess.set %v \n", err)
 		}

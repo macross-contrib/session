@@ -47,8 +47,8 @@ func (st *CookieSessionStore) Delete(key interface{}) error {
 	return nil
 }
 
-// Clean Clean all values in cookie session
-func (st *CookieSessionStore) Clean() error {
+// Flush Clean all values in cookie session
+func (st *CookieSessionStore) Flush() error {
 	st.lock.Lock()
 	defer st.lock.Unlock()
 	st.values = make(map[interface{}]interface{})
@@ -56,18 +56,18 @@ func (st *CookieSessionStore) Clean() error {
 }
 
 // SessionID Return id of this cookie session
-func (st *CookieSessionStore) SessionID() string {
+func (st *CookieSessionStore) ID() string {
 	return st.sid
 }
 
 // SessionRelease Write cookie session to http response cookie
-func (st *CookieSessionStore) SessionRelease(ctx *macross.Context) {
+func (st *CookieSessionStore) Release(ctx *macross.Context) error {
 	str, err := encodeCookie(cookiepder.block,
 		cookiepder.config.SecurityKey,
 		cookiepder.config.SecurityName,
 		st.values)
 	if err != nil {
-		return
+		return err
 	}
 
 	cookie := &macross.Cookie{}
@@ -79,7 +79,7 @@ func (st *CookieSessionStore) SessionRelease(ctx *macross.Context) {
 	cookie.SetExpire(time.Now().Add(time.Duration(cookiepder.config.MaxAge) * time.Second))
 
 	ctx.SetCookie(cookie)
-	return
+	return nil
 }
 
 type cookieConfig struct {
@@ -98,7 +98,7 @@ type CookieProvider struct {
 	block       cipher.Block
 }
 
-// SessionInit Init cookie session provider with max lifetime and config json.
+// Init Init cookie session provider with max lifetime and config json.
 // maxLifetime is ignored.
 // json config:
 // 	securityKey - hash string
@@ -106,7 +106,7 @@ type CookieProvider struct {
 // 	securityName - recognized name in encoded cookie string
 // 	cookieName - cookie name
 // 	maxAge - cookie max life time.
-func (pder *CookieProvider) SessionInit(maxLifetime int64, config string) error {
+func (pder *CookieProvider) Init(maxLifetime int64, config string) error {
 	pder.config = &cookieConfig{}
 	err := json.Unmarshal([]byte(config), pder.config)
 	if err != nil {
@@ -126,9 +126,9 @@ func (pder *CookieProvider) SessionInit(maxLifetime int64, config string) error 
 	return nil
 }
 
-// SessionRead Get SessionStore in cooke.
+// Read Get SessionStore in cooke.
 // decode cooke string to map and put into SessionStore with sid.
-func (pder *CookieProvider) SessionRead(sid string) (Store, error) {
+func (pder *CookieProvider) Read(sid string) (macross.RawStore, error) {
 	maps, _ := decodeCookie(pder.block,
 		pder.config.SecurityKey,
 		pder.config.SecurityName,
@@ -140,28 +140,28 @@ func (pder *CookieProvider) SessionRead(sid string) (Store, error) {
 	return rs, nil
 }
 
-// SessionExist Cookie session is always existed
-func (pder *CookieProvider) SessionExist(sid string) bool {
+// Exist Cookie session is always existed
+func (pder *CookieProvider) Exist(sid string) bool {
 	return true
 }
 
-// SessionRegenerate Implement method, no used.
-func (pder *CookieProvider) SessionRegenerate(oldsid, sid string) (Store, error) {
+// Regenerate Implement method, no used.
+func (pder *CookieProvider) Regenerate(oldsid, sid string) (macross.RawStore, error) {
 	return nil, nil
 }
 
-// SessionDestroy Implement method, no used.
-func (pder *CookieProvider) SessionDestroy(sid string) error {
+// Destory Implement method, no used.
+func (pder *CookieProvider) Destory(sid string) error {
 	return nil
 }
 
-// SessionGC Implement method, no used.
-func (pder *CookieProvider) SessionGC() {
+// GC Implement method, no used.
+func (pder *CookieProvider) GC() {
 	return
 }
 
 // SessionCount Implement method, return 0.
-func (pder *CookieProvider) SessionCount() int {
+func (pder *CookieProvider) Count() int {
 	return 0
 }
 

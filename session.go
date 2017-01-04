@@ -12,26 +12,27 @@ import (
 	"github.com/insionng/macross"
 )
 
-// Store contains all data for one session process with specific id.
-type Store interface {
-	Set(key, value interface{}) error    //set session value
-	Get(key interface{}) interface{}     //get session value
-	Delete(key interface{}) error        //delete session value
-	Clean() error                        //delete all data
-	SessionID() string                   //back current sessionID
-	SessionRelease(ctx *macross.Context) // release the resource & save data to provider & return the data
+// RawStore contains all data for one session process with specific id.
+type RawStore interface {
+	Set(key, value interface{}) error   //set session value
+	Get(key interface{}) interface{}    //get session value
+	Delete(key interface{}) error       //delete session value
+	ID() string                         //back current sessionID
+	Release(ctx *macross.Context) error // release the resource & save data to provider & return the data
+	// Flush deletes all session data.
+	Flush() error
 }
 
 // Provider contains global session methods and saved SessionStores.
 // it can operate a SessionStore by its id.
 type Provider interface {
-	SessionInit(gcLifetime int64, config string) error
-	SessionRead(sid string) (Store, error)
-	SessionExist(sid string) bool
-	SessionRegenerate(oldsid, sid string) (Store, error)
-	SessionDestroy(sid string) error
-	SessionCount() int //get all active session
-	SessionGC()
+	Init(gcLifetime int64, config string) error
+	Read(sid string) (macross.RawStore, error)
+	Exist(sid string) bool
+	Regenerate(oldsid, sid string) (macross.RawStore, error)
+	Destory(sid string) error
+	Count() int //get all active session
+	GC()
 }
 
 var provides = make(map[string]Provider)
@@ -93,7 +94,7 @@ func NewManager(provideName, config string) (*Manager, error) {
 	if cf.MaxLifetime == 0 {
 		cf.MaxLifetime = cf.GcLifetime
 	}
-	err = provider.SessionInit(cf.MaxLifetime, cf.ProviderConfig)
+	err = provider.Init(cf.MaxLifetime, cf.ProviderConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -129,9 +130,9 @@ func (manager *Manager) getSid(ctx *macross.Context) (string, error) {
 	return url.QueryUnescape(cookie.Value())
 }
 
-// SessionStart generate or read the session id from http request.
+// Start generate or read the session id from http request.
 // if session id exists, return SessionStore with this id.
-func (manager *Manager) SessionStart(ctx *macross.Context) (session Store, err error) {
+func (manager *Manager) Start(ctx *macross.Context) (session macross.RawStore, err error) {
 	sid, errs := manager.getSid(ctx)
 	if errs != nil {
 		return nil, errs
@@ -139,9 +140,9 @@ func (manager *Manager) SessionStart(ctx *macross.Context) (session Store, err e
 
 	//log.Println("start sid", sid)
 
-	if sid != "" && manager.provider.SessionExist(sid) {
+	if sid != "" && manager.provider.Exist(sid) {
 		//log.Println("sid exists")
-		return manager.provider.SessionRead(sid)
+		return manager.provider.Read(sid)
 	}
 
 	//log.Println("sid not exists")
@@ -152,7 +153,7 @@ func (manager *Manager) SessionStart(ctx *macross.Context) (session Store, err e
 		return nil, errs
 	}
 
-	session, err = manager.provider.SessionRead(sid)
+	session, err = manager.provider.Read(sid)
 	cookie := new(macross.Cookie)
 	cookie.SetName(manager.config.CookieName)
 	cookie.SetValue(url.QueryEscape(sid))
@@ -163,7 +164,7 @@ func (manager *Manager) SessionStart(ctx *macross.Context) (session Store, err e
 
 	if manager.config.CookieLifetime > 0 {
 		// cookie.MaxAge = manager.config.CookieLifetime
-		cookie.SetExpire(time.Now().Add(time.Duration(manager.config.CookieLifetime) * time.Second))
+		cookie.SetExpire(time.Now().Add(time.Duration(manager.config.CookieLifetime)))
 	}
 	if manager.config.EnableSetCookie {
 		ctx.SetCookie(cookie)
@@ -175,43 +176,26 @@ func (manager *Manager) SessionStart(ctx *macross.Context) (session Store, err e
 	return
 }
 
-// SessionDestroy Destroy session by its id in http request cookie.
-func (manager *Manager) SessionDestroy(ctx *macross.Context) {
-	cookie, err := ctx.Cookie(manager.config.CookieName)
-	if err != nil || cookie.Value() == "" {
-		return
-	}
-
-	sid, _ := url.QueryUnescape(cookie.Value())
-	manager.provider.SessionDestroy(sid)
-	if manager.config.EnableSetCookie {
-		expiration := time.Now()
-
-		cookie = new(macross.Cookie)
-		cookie.SetName(manager.config.CookieName)
-		cookie.SetPath("/")
-		cookie.SetHTTPOnly(true)
-		cookie.SetExpire(expiration)
-		cookie.SetDomain(manager.config.Domain)
-		ctx.SetCookie(cookie)
-	}
+// Read returns raw session store by session ID.
+func (manager *Manager) Read(sid string) (rawStore macross.RawStore, err error) {
+	rawStore, err = manager.provider.Read(sid)
+	return
 }
 
-// GetSessionStore Get SessionStore by its id.
-func (manager *Manager) GetSessionStore(sid string) (sessions Store, err error) {
-	sessions, err = manager.provider.SessionRead(sid)
-	return
+// Count counts and returns number of sessions.
+func (m *Manager) Count() int {
+	return m.provider.Count()
 }
 
 // GC Start session gc process.
 // it can do gc in times after gc lifetime.
 func (manager *Manager) GC() {
-	manager.provider.SessionGC()
+	manager.provider.GC()
 	time.AfterFunc(time.Duration(manager.config.GcLifetime)*time.Second, func() { manager.GC() })
 }
 
-// SessionRegenerateID Regenerate a session id for this SessionStore who's id is saving in http request.
-func (manager *Manager) SessionRegenerateID(ctx *macross.Context) (session Store) {
+// RegenerateId Regenerate a session id for this SessionStore who's id is saving in http request.
+func (manager *Manager) RegenerateId(ctx *macross.Context) (session macross.RawStore, err error) {
 	sid, err := manager.sessionID()
 	if err != nil {
 		return
@@ -220,7 +204,7 @@ func (manager *Manager) SessionRegenerateID(ctx *macross.Context) (session Store
 	cookie, err := ctx.Cookie(manager.config.CookieName)
 	if err != nil || cookie.Value() == "" {
 		//delete old cookie
-		session, _ = manager.provider.SessionRead(sid)
+		session, _ = manager.provider.Read(sid)
 		c = new(macross.Cookie)
 		c.SetName(manager.config.CookieName)
 		c.SetValue(url.QueryEscape(sid))
@@ -231,7 +215,7 @@ func (manager *Manager) SessionRegenerateID(ctx *macross.Context) (session Store
 
 	} else {
 		oldsid, _ := url.QueryUnescape(cookie.Value())
-		session, _ = manager.provider.SessionRegenerate(oldsid, sid)
+		session, _ = manager.provider.Regenerate(oldsid, sid)
 
 		c = new(macross.Cookie)
 		c.SetName(cookie.Name())
@@ -243,7 +227,7 @@ func (manager *Manager) SessionRegenerateID(ctx *macross.Context) (session Store
 	}
 	if manager.config.CookieLifetime > 0 {
 		// cookie.MaxAge = manager.config.CookieLifetime
-		c.SetExpire(time.Now().Add(time.Duration(manager.config.CookieLifetime) * time.Second))
+		c.SetExpire(time.Now().Add(time.Duration(manager.config.CookieLifetime)))
 
 	}
 	if manager.config.EnableSetCookie {
@@ -254,9 +238,30 @@ func (manager *Manager) SessionRegenerateID(ctx *macross.Context) (session Store
 	return
 }
 
-// GetActiveSession Get all active sessions count number.
-func (manager *Manager) GetActiveSession() int {
-	return manager.provider.SessionCount()
+// Destory deletes a session by given ID.
+func (m *Manager) Destory(self *macross.Context) error {
+
+	var sid string
+	c, e := self.Cookie(m.config.CookieName)
+	if !(e != nil) {
+		sid = c.Value()
+	}
+
+	if len(sid) == 0 {
+		return nil
+	}
+
+	if err := m.provider.Destory(sid); err != nil {
+		return err
+	}
+
+	cookie := new(macross.Cookie)
+	cookie.SetName(m.config.CookieName)
+	cookie.SetPath("/")
+	cookie.SetHTTPOnly(true)
+	cookie.SetExpire(time.Now())
+	self.SetCookie(cookie)
+	return nil
 }
 
 // SetSecure Set cookie with https.

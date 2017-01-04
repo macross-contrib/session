@@ -9,7 +9,7 @@ import (
 	"github.com/insionng/macross"
 )
 
-var GlobalSessions *Manager
+var GlobalManager *Manager
 
 var defaultOtions = Options{"memory", `{"cookieName":"MacrossSessionId","gcLifetime":3600}`}
 
@@ -24,6 +24,28 @@ const (
 	SESSION_FLASH_KEY   = "_SESSION_FLASH"
 	SESSION_INPUT_KEY   = "_SESSION_INPUT"
 )
+
+// Store is the interface that contains all data for one session process with specific ID.
+type Store interface {
+	RawStore
+	// Read returns raw session store by session ID.
+	Read(string) (macross.RawStore, error)
+	// Destory deletes a session.
+	Destory(*macross.Context) error
+	// RegenerateId regenerates a session store from old session ID to new one.
+	RegenerateId(*macross.Context) (macross.RawStore, error)
+	// Count counts and returns number of sessions.
+	Count() int
+	// GC calls GC to clean expired sessions.
+	GC()
+}
+
+type store struct {
+	RawStore
+	*Manager
+}
+
+var _ Store = &store{}
 
 type Options struct {
 	Provider string
@@ -49,33 +71,36 @@ func setup(op ...Options) error {
 	log.Println("Macross session config:", option)
 
 	var err error
-	GlobalSessions, err = NewManager(option.Provider, option.Config)
+	GlobalManager, err = NewManager(option.Provider, option.Config)
 	if err != nil {
 		return err
 	}
-	go GlobalSessions.GC()
+	go GlobalManager.GC()
 
 	return nil
 }
 
 // Sessioner Macross session 中间件
 func Sessioner(op ...Options) macross.Handler {
-	if GlobalSessions == nil {
+	if GlobalManager == nil {
 		if err := setup(op...); err != nil {
-			log.Fatalln("session errors:", err)
+			log.Fatalln("Sessioner() setup() errors:", err)
 		}
 	}
 	return func(c *macross.Context) error {
-		if GlobalSessions == nil {
+		if GlobalManager == nil {
 			return errors.New("session manager not found, use session middleware but not init ?")
 		}
 
-		sess, err := GlobalSessions.SessionStart(c)
+		sess, err := GlobalManager.Start(c)
 		if err != nil {
 			return err
 		}
 
-		c.Session = sess
+		c.Session = store{
+			RawStore: sess,
+			Manager:  GlobalManager,
+		}
 		c.Set(CONTEXT_FLASH_KEY, Flash{})
 
 		flashVals := url.Values{}
@@ -96,13 +121,12 @@ func Sessioner(op ...Options) macross.Handler {
 		}
 
 		f := NewFlash()
-		sess.Set(SESSION_FLASH_KEY, f)
 		c.Set(CONTEXT_SESSION_KEY, sess)
 
 		defer func() {
 			//log.Println("save session", sess)
 			sess.Set(SESSION_FLASH_KEY, url.QueryEscape(f.Encode()))
-			sess.SessionRelease(c)
+			sess.Release(c)
 		}()
 
 		return c.Next()
