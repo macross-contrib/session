@@ -119,7 +119,7 @@ func Sessioner(op ...Options) macross.Handler {
 					if flasho.FlashNow {
 						c.Set(CONTEXT_FLASH_KEY, flash)
 					} else {
-						flash.Values = flasho.Values
+						flash.Values = url.Values{}
 						flash.Ctx.Set(CONTEXT_FLASH_KEY, flash)
 						has = true
 					}
