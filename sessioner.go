@@ -101,6 +101,7 @@ func Sessioner(op ...Options) macross.Handler {
 			RawStore: sess,
 			Manager:  GlobalManager,
 		}
+		c.Flash = new(macross.Flash)
 		c.Set(CONTEXT_FLASH_KEY, Flash{})
 
 		flashVals := url.Values{}
@@ -109,19 +110,22 @@ func Sessioner(op ...Options) macross.Handler {
 			vals, _ := url.QueryUnescape(flashIf.(string))
 			flashVals, _ = url.ParseQuery(vals)
 			if len(flashVals) > 0 {
-				flash := Flash{}
+				flash := macross.Flash{}
 				flash.ErrorMsg = flashVals.Get("error")
 				flash.WarningMsg = flashVals.Get("warning")
 				flash.InfoMsg = flashVals.Get("info")
 				flash.SuccessMsg = flashVals.Get("success")
+
+				c.Flash = &flash
 				// flash先暂存到context里面
 				c.Set(CONTEXT_FLASH_KEY, flash)
 
 			}
 		}
 
-		f := NewFlash()
-		c.Set(CONTEXT_SESSION_KEY, sess)
+		f := NewFlash(c)
+		c.Flash = f
+		c.Set(CONTEXT_SESSION_KEY, c.Session)
 
 		defer func() {
 			//log.Println("save session", sess)
@@ -143,15 +147,15 @@ func GetStore(c *macross.Context) Store {
 	return nil
 }
 
-func GetFlash(c *macross.Context) *Flash {
+func GetFlash(c *macross.Context) *macross.Flash {
 	if store := GetStore(c); store != nil {
 		if tmp := store.Get(SESSION_FLASH_KEY); tmp != nil {
-			if flash, okay := tmp.(*Flash); okay {
+			if flash, okay := tmp.(*macross.Flash); okay {
 				return flash
 			}
 		}
 	}
-	return NewFlash()
+	return NewFlash(c)
 }
 
 func FlashValue(c *macross.Context) Flash {
@@ -183,8 +187,8 @@ func CleanInput(c *macross.Context) {
 	}
 }
 
-func NewFlash() *Flash {
-	return &Flash{url.Values{}, "", "", "", ""}
+func NewFlash(ctx *macross.Context) *macross.Flash {
+	return &macross.Flash{ctx, url.Values{}, "", "", "", ""}
 }
 
 type Flash struct {
