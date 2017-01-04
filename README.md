@@ -60,10 +60,8 @@ func main() {
 	//v.Use(session.Sessioner(session.Options{"redis", `{"cookieName":"MacrossSessionId","gcLifetime":3600,"providerConfig":"127.0.0.1:6379"}`}))
 
 	v.Get("/get", func(self *macross.Context) error {
-		sess := session.GetStore(self)
-
 		value := "nil"
-		valueIf := sess.Get("key")
+		valueIf := self.Session.Get("key")
 		if valueIf != nil {
 			value = valueIf.(string)
 		}
@@ -73,14 +71,13 @@ func main() {
 	})
 
 	v.Get("/set", func(self *macross.Context) error {
-		sess := session.GetStore(self)
 
 		val := self.QueryParam("v")
 		if len(val) == 0 {
 			val = "value"
 		}
 
-		err := sess.Set("key", val)
+		err := self.Session.Set("key", val)
 		if err != nil {
 			log.Printf("sess.set %v \n", err)
 		}
@@ -89,6 +86,7 @@ func main() {
 
 	v.Listen(":9000")
 }
+
 ```
 
 
@@ -104,19 +102,19 @@ Maybe you will find the **memory** provider is a good example.
 		Set(key, value interface{}) error     //set session value
 		Get(key interface{}) interface{}      //get session value
 		Delete(key interface{}) error         //delete session value
-		SessionID() string                    //back current sessionID
-		SessionRelease(ctx *macross.Context) // release the resource & save data to provider & return the data
+		ID() string                    //back current sessionID
+		Release(ctx *macross.Context) error // release the resource & save data to provider & return the data
 		Flush() error                         //delete all data
 	}
 
 	type Provider interface {
-		SessionInit(gcLifetime int64, config string) error
-		SessionRead(sid string) (SessionStore, error)
-		SessionExist(sid string) bool
-		SessionRegenerate(oldsid, sid string) (SessionStore, error)
-		SessionDestroy(sid string) error
-		SessionCount() int //get all active session
-		SessionGC()
+		Init(gcLifetime int64, config string) error
+		Read(sid string) (macross.RawStore, error)
+		Exist(sid string) bool
+		Regenerate(oldsid, sid string) (macross.RawStore, error)
+		Destroy(sid string) error
+		Count() int //get all active session
+		GC()
 	}
 
 
