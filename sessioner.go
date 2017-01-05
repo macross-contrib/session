@@ -109,17 +109,17 @@ func Sessioner(op ...Options) macross.Handler {
 			//vals, _ := url.QueryUnescape(flashIf.(string))
 			if flasho, okay := flashIf.(*macross.Flash); okay {
 				if flashVals, _ = url.ParseQuery(flasho.Encode()); len(flashVals) > 0 {
-					flash := macross.Flash{}
+					flash := macross.Flash{Values: url.Values{}}
 					flash.ErrorMsg = flashVals.Get("error")
 					flash.WarningMsg = flashVals.Get("warning")
 					flash.InfoMsg = flashVals.Get("info")
 					flash.SuccessMsg = flashVals.Get("success")
 
-					flash.Ctx = c
 					if flasho.FlashNow {
+						flash.Ctx = c
 						c.Set(CONTEXT_FLASH_KEY, flash)
 					} else {
-						flash.Values = url.Values{}
+						flash.Ctx = new(macross.Context)
 						flash.Ctx.Set(CONTEXT_FLASH_KEY, flash)
 						has = true
 					}
