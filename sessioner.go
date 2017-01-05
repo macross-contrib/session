@@ -3,10 +3,9 @@ package session
 import (
 	"encoding/gob"
 	"errors"
+	"github.com/insionng/macross"
 	"log"
 	"net/url"
-
-	"github.com/insionng/macross"
 )
 
 var GlobalManager *Manager
@@ -109,28 +108,31 @@ func Sessioner(op ...Options) macross.Handler {
 			//vals, _ := url.QueryUnescape(flashIf.(string))
 			if flasho, okay := flashIf.(*macross.Flash); okay {
 				if flashVals, _ = url.ParseQuery(flasho.Encode()); len(flashVals) > 0 {
+					//flash := macross.Flash{Values: flashVals}
 					flash := macross.Flash{Values: url.Values{}}
 					flash.ErrorMsg = flashVals.Get("error")
 					flash.WarningMsg = flashVals.Get("warning")
 					flash.InfoMsg = flashVals.Get("info")
 					flash.SuccessMsg = flashVals.Get("success")
 
+					flash.Ctx = c
 					if flasho.FlashNow {
-						flash.Ctx = c
+						flash.FlashNow = true
 						c.Set(CONTEXT_FLASH_KEY, flash)
 					} else {
-						flash.Ctx = new(macross.Context)
+						flash.FlashNow = false
 						flash.Ctx.Set(CONTEXT_FLASH_KEY, flash)
-						has = true
 					}
 					c.Flash = &flash
+					has = true
+
 				}
 			}
 
 		}
 
 		if !has {
-			c.Flash = NewFlash(c)
+			c.Flash = NewFlash(new(macross.Context))
 			c.Set(CONTEXT_FLASH_KEY, c.Flash)
 		}
 
