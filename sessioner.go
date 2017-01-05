@@ -108,7 +108,6 @@ func Sessioner(op ...Options) macross.Handler {
 			//vals, _ := url.QueryUnescape(flashIf.(string))
 			if flasho, okay := flashIf.(*macross.Flash); okay {
 				if flashVals, _ = url.ParseQuery(flasho.Encode()); len(flashVals) > 0 {
-					//flash := macross.Flash{Values: flashVals}
 					flash := macross.Flash{Values: url.Values{}}
 					flash.ErrorMsg = flashVals.Get("error")
 					flash.WarningMsg = flashVals.Get("warning")
