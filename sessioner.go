@@ -26,7 +26,7 @@ const (
 
 // Store is the interface that contains all data for one session process with specific ID.
 type Store interface {
-	RawStore
+	macross.RawStore
 	// Read returns raw session store by session ID.
 	Read(string) (macross.RawStore, error)
 	// Destory deletes a session.
@@ -40,7 +40,7 @@ type Store interface {
 }
 
 type store struct {
-	RawStore
+	macross.RawStore
 	*Manager
 }
 
@@ -143,7 +143,6 @@ func Sessioner(op ...Options) macross.Handler {
 			c.Session.Set(SESSION_FLASH_KEY, c.Flash)
 			c.Session.Release(c)
 		}()
-
 		return c.Next()
 	}
 }

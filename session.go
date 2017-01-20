@@ -12,17 +12,6 @@ import (
 	"github.com/insionng/macross"
 )
 
-// RawStore contains all data for one session process with specific id.
-type RawStore interface {
-	Set(key, value interface{}) error   //set session value
-	Get(key interface{}) interface{}    //get session value
-	Delete(key interface{}) error       //delete session value
-	ID() string                         //back current sessionID
-	Release(ctx *macross.Context) error // release the resource & save data to provider & return the data
-	// Flush deletes all session data.
-	Flush() error
-}
-
 // Provider contains global session methods and saved SessionStores.
 // it can operate a SessionStore by its id.
 type Provider interface {
